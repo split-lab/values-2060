@@ -187,7 +187,7 @@ p{margin:0}
 
 <!-- RESULT -->
 <section class="screen" id="result">
-  <div class="top"><span class="small">Your 2060 archetype</span><span class="small" id="rNum"></span></div>
+  <div class="top"><span class="small">Your 2060 archetype</span></div>
   <div class="arch" id="arch"></div>
   <p class="sub" style="margin-top:0" id="archLine"></p>
   <div id="triR"></div>
@@ -382,7 +382,6 @@ function showResult(me,crowd,note){
   countUp($('sPct'),below,'%');$('sPctL').textContent='more '+NAME[dom].toLowerCase()+'-minded than others';
   // goal
   const n=me.n||(crowd.points.length+1);
-  $('rNum').textContent='Response #'+n;
   requestAnimationFrame(()=>{$('gBar').style.width=100*(1-Math.exp(-n/40))+'%'});
   $('rNote').textContent=note||(me.demo?'Preview mode. Grey dots are sample responses.':'');
   go('result');setTimeout(()=>buzz([10,30,10]),reduce?0:1900);
