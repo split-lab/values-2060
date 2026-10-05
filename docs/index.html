@@ -195,7 +195,7 @@ p{margin:0}
     <div class="stat"><div class="n" id="sShift">0</div><div class="l" id="sShiftL"></div></div>
     <div class="stat"><div class="n" id="sPct">0%</div><div class="l" id="sPctL"></div></div>
   </div>
-  <div class="goal"><div class="row"><span id="gText">Responses</span><span id="gNum"></span></div><div class="track"><i id="gBar"></i></div></div>
+  <div class="goal"><div class="row"><span>Responses so far</span></div><div class="track"><i id="gBar"></i></div></div>
   <p class="note" id="rNote" style="margin-top:12px"></p>
   <div class="grow"></div>
   <div class="dock">
@@ -211,7 +211,6 @@ p{margin:0}
 <script>
 /* ===== CONFIG ===== */
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzHFlhaO3dbdsQQRCqDiKJd4E5fmkkgXP--LVkTUXRyfpTkMSFpGsT0mYu-umcJji3K/exec';   // paste your Google Apps Script /exec URL here
-const GOAL = 50;
 /* ================== */
 
 (() => {
@@ -383,9 +382,8 @@ function showResult(me,crowd,note){
   countUp($('sPct'),below,'%');$('sPctL').textContent='more '+NAME[dom].toLowerCase()+'-minded than others';
   // goal
   const n=me.n||(crowd.points.length+1);
-  $('rNum').textContent='Response #'+n;$('gNum').textContent=Math.min(n,GOAL)+' of '+GOAL;
-  $('gText').textContent=n>=GOAL?'Goal reached, keep it going':'Help us reach '+GOAL;
-  requestAnimationFrame(()=>{$('gBar').style.width=Math.min(100,100*n/GOAL)+'%'});
+  $('rNum').textContent='Response #'+n;
+  requestAnimationFrame(()=>{$('gBar').style.width=100*(1-Math.exp(-n/40))+'%'});
   $('rNote').textContent=note||(me.demo?'Preview mode. Grey dots are sample responses.':'');
   go('result');setTimeout(()=>buzz([10,30,10]),reduce?0:1900);
   makeCard(A,me,key,c1,c2).then(f=>card=f);
