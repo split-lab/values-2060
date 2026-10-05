@@ -1,0 +1,4 @@
+.clasp.json
+.clasprc.json
+analysis/*.xlsx
+__pycache__/
