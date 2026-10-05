@@ -1,3 +1,4 @@
+/** @OnlyCurrentDoc */
 /**
  * MIS20070 - Values 2060 survey backend (Google Apps Script, bound to the responses Sheet)
  * doPost: saves one response, blocks duplicates. doGet: returns all points + count.
@@ -23,14 +24,15 @@ function doPost(e) {
     const sh = SpreadsheetApp.getActive().getSheetByName(SHEET);
     const ok = p => p && [p.e, p.b, p.p].every(n => typeof n === 'number' && n >= 0 && n <= 100)
                       && Math.round(p.e + p.b + p.p) === 100;
-    if (!d.respondent_id || !ok(d.t) || !ok(d.f)) return out({ ok: false, reason: 'invalid' });
+    const idOk = typeof d.respondent_id === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(d.respondent_id);
+    if (!idOk || !ok(d.t) || !ok(d.f)) return out({ ok: false, reason: 'invalid' });
     const last = sh.getLastRow();
     if (last > 1) {
       const ids = sh.getRange(2, 2, last - 1, 1).getValues().flat();
       if (ids.indexOf(d.respondent_id) !== -1) return out({ ok: false, reason: 'duplicate' });
     }
     sh.appendRow([new Date(), d.respondent_id, d.t.e, d.t.b, d.t.p, d.f.e, d.f.b, d.f.p,
-                  String(d.ua || '').slice(0, 180)]);
+                  cleanUa(d.ua)]);
     return out({ ok: true, n: sh.getLastRow() - 1 });
   } catch (err) {
     return out({ ok: false, reason: 'error' });
@@ -44,6 +46,11 @@ function doGet() {
   const last = sh.getLastRow();
   const points = last > 1 ? sh.getRange(2, 3, last - 1, 6).getValues() : [];
   return out({ n: points.length, points: points });
+}
+
+// Strip leading = + - @ (and whitespace) so Sheets/Excel never treat the user agent as a formula.
+function cleanUa(ua) {
+  return String(ua || '').replace(/^[\s=+\-@]+/, '').slice(0, 180);
 }
 
 function out(o) {

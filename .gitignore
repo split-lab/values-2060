@@ -2,3 +2,4 @@
 .clasprc.json
 analysis/*.xlsx
 __pycache__/
+DEPLOYMENT.md
