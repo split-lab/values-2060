@@ -339,7 +339,7 @@ async function withTimeout(p,ms){return Promise.race([p,new Promise((_,j)=>setTi
 const toCrowd=pts=>({n:pts.length,points:pts.map(a=>({t:{e:a[0]/100,b:a[1]/100,p:a[2]/100},f:{e:a[3]/100,b:a[4]/100,p:a[5]/100}})),demo:false});
 async function fetchCrowd(){
   if(!ENDPOINT) return {n:null,points:sample(),demo:true};
-  try{const r=await withTimeout(fetch(ENDPOINT),5000);const d=await r.json();
+  try{const r=await withTimeout(fetch(ENDPOINT),8000);const d=await r.json();
     return toCrowd(d.points||[])}
   catch(_){return {n:null,points:[],demo:false}}
 }
@@ -355,11 +355,12 @@ async function submit(){
   // Use the prefetched points (n = count + 1); if they aren't back yet, whichever of the prefetch or the POST reply arrives first.
   const pre=(prefetch||fetchCrowd()).then(c=>c.n===null&&!c.demo?Promise.reject():{crowd:c,n:c.n===null?null:c.n+1});
   const viaPost=post.then(d=>d&&Array.isArray(d.points)?{crowd:toCrowd(d.points),n:d.ok?d.n:d.points.length}:Promise.reject());
-  let got=await Promise.any([pre,viaPost]).catch(()=>null);
-  if(!got){const c=await fetchCrowd();got={crowd:c,n:c.n}}
+  let got=null;const crowdP=Promise.any([pre,viaPost]).catch(()=>fetchCrowd().then(c=>({crowd:c,n:c.n})));crowdP.then(g=>{got=g});
   await new Promise(r=>setTimeout(r,Math.max(0,800-(performance.now()-started))));
-  const saved={t:tP,f:fP,n:got.n,demo:got.crowd.demo};store.set('v2060',saved);
-  showResult(saved,got.crowd,'');
+  // Never wait for the crowd: if it isn't here yet, show the result now and let the dots pop in when it arrives.
+  const saved={t:tP,f:fP,n:got?got.n:null,demo:got?got.crowd.demo:false};store.set('v2060',saved);
+  showResult(saved,got&&got.crowd,'');
+  if(!got)crowdP.then(g=>{if(g.n!=null){saved.n=g.n;store.set('v2060',saved)}addCrowd(saved,g.crowd)});
 }
 
 /* ===== result ===== */
@@ -376,7 +377,7 @@ function archOf(fp){const top=K.slice().sort((a,b)=>fp[b]-fp[a])[0];return fp[to
 function countUp(node,to,suffix,prefix){if(reduce){node.textContent=(prefix||'')+to+(suffix||'');return}
   const t0=performance.now(),D=1100;(function f(t){const k=Math.min(1,(t-t0)/D),e=1-Math.pow(2,-10*k);node.textContent=(prefix||'')+Math.round(to*e)+(suffix||'');if(k<1)requestAnimationFrame(f)})(t0)}
 
-let card=null;
+let card=null,crowdLayer=null;
 function showResult(me,crowd,note){
   const key=archOf(me.f),A=ARCH[key];
   const [c1,c2]=GRAD[key];
@@ -385,7 +386,7 @@ function showResult(me,crowd,note){
   $('archLine').textContent=A.line;
   const host=$('triR');host.innerHTML='';const s=triangle(host);s.removeAttribute('tabindex');s.style.cursor='default';
   const toW=p=>({e:p.e/100,b:p.b/100,p:p.p/100});
-  crowd.points.forEach((pt,i)=>{const q=xy(pt.f);el('circle',{class:'cdot',cx:q.x,cy:q.y,r:4,fill:'var(--ink-2)',opacity:.45,style:'animation-delay:'+(.2+i*.025)+'s'},s)});
+  crowdLayer=el('g',{},s); // grey crowd dots go here, under the user's own markers, whether drawn now or later
   const a=xy(toW(me.t)),b=xy(toW(me.f)),dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy);
   const defs=s.querySelector('defs');const m=el('marker',{id:'ah',viewBox:'0 0 10 10',refX:'7',refY:'5',markerWidth:'6',markerHeight:'6',orient:'auto'},defs);el('path',{d:'M0,0L10,5L0,10z',fill:'var(--ink)'},m);
   el('circle',{class:'cdot',cx:a.x,cy:a.y,r:9,fill:'var(--canvas)',stroke:'var(--ink)','stroke-width':'2.5',style:'animation-delay:1.1s'},s);
@@ -396,17 +397,23 @@ function showResult(me,crowd,note){
   // biggest shift
   const sh=K.map(k=>({k,d:me.f[k]-me.t[k]})).sort((x,y)=>Math.abs(y.d)-Math.abs(x.d))[0];
   countUp($('sShift'),Math.abs(sh.d),'',sh.d>=0?'+':'-');$('sShiftL').textContent=NAME[sh.k]+' by 2060';
-  // percentile on dominant 2060 value
-  const dom=K.slice().sort((x,y)=>me.f[y]-me.f[x])[0];
-  const vals=crowd.points.map(p=>p.f[dom]*100);
-  const below=vals.length?Math.min(99,Math.max(1,Math.round(100*vals.filter(v=>v<me.f[dom]).length/vals.length))):50;
-  countUp($('sPct'),below,'%');$('sPctL').textContent='more '+NAME[dom].toLowerCase()+'-minded than others';
-  // goal
-  const n=me.n||(crowd.points.length+1);
-  requestAnimationFrame(()=>{$('gBar').style.width=100*(1-Math.exp(-n/40))+'%'});
+  // percentile and response count need the crowd: filled in now, or by addCrowd when the points arrive
+  $('sPctL').textContent='more '+NAME[domOf(me.f)].toLowerCase()+'-minded than others';
+  if(crowd)addCrowd(me,crowd);else{$('sPct').textContent='–';if(me.n)setBar(me.n)}
   $('rNote').textContent=note||(me.demo?'Preview mode. Grey dots are sample responses.':'');
   go('result');setTimeout(()=>buzz([10,30,10]),reduce?0:1900);
   makeCard(A,me,key,c1,c2).then(f=>card=f);
+}
+const domOf=f=>K.slice().sort((x,y)=>f[y]-f[x])[0];
+const setBar=n=>requestAnimationFrame(()=>{$('gBar').style.width=100*(1-Math.exp(-n/40))+'%'});
+function addCrowd(me,crowd){
+  crowd.points.forEach((pt,i)=>{const q=xy(pt.f);el('circle',{class:'cdot',cx:q.x,cy:q.y,r:4,fill:'var(--ink-2)',opacity:.45,style:'animation-delay:'+(.2+i*.025)+'s'},crowdLayer)});
+  // percentile on dominant 2060 value
+  const dom=domOf(me.f),vals=crowd.points.map(p=>p.f[dom]*100);
+  const below=vals.length?Math.min(99,Math.max(1,Math.round(100*vals.filter(v=>v<me.f[dom]).length/vals.length))):50;
+  countUp($('sPct'),below,'%');
+  // goal
+  setBar(me.n||(crowd.points.length+1));
 }
 
 /* ===== share card (1080x1920) ===== */
@@ -449,7 +456,7 @@ $('copy').onclick=async()=>{try{await navigator.clipboard.writeText(URL_);toast(
 
 /* ===== returning visitor ===== */
 const prev=store.get('v2060');
-if(prev&&prev.t){fetchCrowd().then(c=>showResult(prev,c,'You have already taken part. Thanks.'))}
+if(prev&&prev.t){const c=fetchCrowd();showResult(prev,null,'You have already taken part. Thanks.');c.then(cr=>addCrowd(prev,cr))} // show at once; dots pop in when they arrive
 })();
 </script>
 </body>
