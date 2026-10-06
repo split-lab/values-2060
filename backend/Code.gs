@@ -6,7 +6,7 @@
  */
 const SHEET = 'responses';
 const HEADERS = ['timestamp','respondent_id','today_equality','today_belonging','today_purpose',
-                 'f2060_equality','f2060_belonging','f2060_purpose','user_agent'];
+                 'f2060_equality','f2060_belonging','f2060_purpose','device'];
 
 function setup() {
   const ss = SpreadsheetApp.getActive();
@@ -32,7 +32,7 @@ function doPost(e) {
       if (ids.indexOf(d.respondent_id) !== -1) return out({ ok: false, reason: 'duplicate' });
     }
     sh.appendRow([new Date(), d.respondent_id, d.t.e, d.t.b, d.t.p, d.f.e, d.f.b, d.f.p,
-                  cleanUa(d.ua)]);
+                  deviceOf(cleanUa(d.ua))]);
     return out({ ok: true, n: sh.getLastRow() - 1 });
   } catch (err) {
     return out({ ok: false, reason: 'error' });
@@ -51,6 +51,17 @@ function doGet() {
 // Strip leading = + - @ (and whitespace) so Sheets/Excel never treat the user agent as a formula.
 function cleanUa(ua) {
   return String(ua || '').replace(/^[\s=+\-@]+/, '').slice(0, 180);
+}
+
+// Store only a coarse device label, never the full user agent. iPhone/iPad are checked before Mac
+// because their user agents also contain "Mac OS X". Anything unrecognised (e.g. curl) is Other.
+function deviceOf(ua) {
+  if (/iPhone/.test(ua)) return 'iPhone';
+  if (/iPad/.test(ua)) return 'iPad';
+  if (/Android/.test(ua)) return 'Android';
+  if (/Windows/.test(ua)) return 'Windows';
+  if (/Macintosh|Mac OS X/.test(ua)) return 'Mac';
+  return 'Other';
 }
 
 function out(o) {
