@@ -411,7 +411,8 @@ function addCrowd(me,crowd){
   // percentile on dominant 2060 value
   const dom=domOf(me.f),vals=crowd.points.map(p=>p.f[dom]*100);
   const below=vals.length?Math.min(99,Math.max(1,Math.round(100*vals.filter(v=>v<me.f[dom]).length/vals.length))):50;
-  countUp($('sPct'),below,'%');
+  if(crowd.n===null&&!crowd.demo)$('sPct').textContent='–'; // crowd request failed outright: no comparison to show
+  else countUp($('sPct'),below,'%');
   // goal
   setBar(me.n||(crowd.points.length+1));
 }
