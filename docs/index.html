@@ -14,12 +14,13 @@
 :root{
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter",system-ui,"Segoe UI",Roboto,sans-serif;
   --canvas:#ffffff;--canvas-2:#f5f5f7;--ink:#1d1d1f;--ink-2:#6e6e73;--hair:#d2d2d7;--fill:#e8e8ed;--accent:#0071e3;--on-accent:#fff;
+  --hero-line:#c7c7cc;--hero-dot:#1d1d1f;
   --eq:#0a84ff;--be:#ff9f0a;--pu:#bf5af2;
   --ease:cubic-bezier(0.16,1,0.3,1);--std:cubic-bezier(0.4,0,0.2,1);
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--canvas:#000;--canvas-2:#1c1c1e;--ink:#f5f5f7;--ink-2:#a1a1a6;--hair:#38383a;--fill:#2c2c2e;--accent:#2997ff}}
-:root[data-theme="dark"]{--canvas:#000;--canvas-2:#1c1c1e;--ink:#f5f5f7;--ink-2:#a1a1a6;--hair:#38383a;--fill:#2c2c2e;--accent:#2997ff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--canvas:#000;--canvas-2:#1c1c1e;--ink:#f5f5f7;--ink-2:#a1a1a6;--hair:#38383a;--fill:#2c2c2e;--accent:#2997ff;--hero-line:#3a3a3c;--hero-dot:#fff}}
+:root[data-theme="dark"]{--canvas:#000;--canvas-2:#1c1c1e;--ink:#f5f5f7;--ink-2:#a1a1a6;--hair:#38383a;--fill:#2c2c2e;--accent:#2997ff;--hero-line:#3a3a3c;--hero-dot:#fff}
 html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%;margin:0}
@@ -52,7 +53,7 @@ p{margin:0}
 :focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:12px}
 
 /* hero */
-#intro{background:#000;color:#f5f5f7;margin:0 auto;--ink:#f5f5f7;--ink-2:#a1a1a6;--hair:#38383a;--canvas:#000;--accent:#2997ff}
+#intro{margin:0 auto}
 .hero-art{display:flex;justify-content:center;margin:12px 0 22px}
 .hero-art svg{width:min(76vw,300px);height:auto;overflow:visible}
 @supports (height:100svh){.hero-art svg{width:clamp(140px,calc((100svh - 500px) * 1.11),min(76vw,300px))}}
@@ -65,7 +66,7 @@ p{margin:0}
 .rise{opacity:0;animation:rise .9s var(--ease) forwards}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .vals{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
-.vchip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:980px;background:#1c1c1e;font-size:15px;font-weight:500}
+.vchip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:980px;background:var(--canvas-2);font-size:15px;font-weight:500}
 .vchip i{width:8px;height:8px;border-radius:50%}
 .vals>div:last-child{flex-grow:1}
 .def{width:0;min-width:100%;margin-top:6px;text-wrap:balance}
@@ -107,7 +108,9 @@ p{margin:0}
 
 /* result */
 .eyebrow{font-size:15px;color:var(--ink-2);margin-top:6px}
-.arch{font-size:clamp(38px,10.5vw,50px);font-weight:700;letter-spacing:-.035em;line-height:1.02;margin:4px 0 8px;background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent;animation:reveal 1s var(--ease) both .15s}
+.arch{font-size:clamp(38px,10.5vw,50px);font-weight:700;letter-spacing:-.035em;line-height:1.02;margin:4px 0 8px;background:linear-gradient(90deg,var(--c1l),var(--c2l));-webkit-background-clip:text;background-clip:text;color:transparent;animation:reveal 1s var(--ease) both .15s}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .arch{background-image:linear-gradient(90deg,var(--c1),var(--c2))}}
+:root[data-theme="dark"] .arch{background-image:linear-gradient(90deg,var(--c1),var(--c2))}
 @keyframes reveal{from{opacity:0;transform:scale(.92);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
 .cdot{opacity:0;transform-box:fill-box;transform-origin:center;animation:orb .5s var(--ease) forwards}
 .arrow{stroke-dasharray:400;stroke-dashoffset:400;animation:draw 1s var(--ease) forwards}
@@ -126,7 +129,7 @@ p{margin:0}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}.draw,.arrow{stroke-dashoffset:0}.orb,.cdot,.rise,.wander{opacity:1}}
 </style>
 </head>
-<body class="night">
+<body>
 <main>
 
 <!-- INTRO -->
@@ -135,11 +138,11 @@ p{margin:0}
   <div class="hero-art" aria-hidden="true">
     <svg viewBox="0 0 300 270">
       <defs><filter id="hb" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="6"/></filter></defs>
-      <polygon class="draw" points="150,18 22,240 278,240" fill="none" stroke="#3a3a3c" stroke-width="1.5" stroke-linejoin="round"/>
+      <polygon class="draw" points="150,18 22,240 278,240" fill="none" stroke="var(--hero-line)" stroke-width="1.5" stroke-linejoin="round"/>
       <g class="orb" style="animation-delay:.9s"><circle cx="150" cy="18" r="16" fill="#0a84ff" filter="url(#hb)" opacity=".7"/><circle cx="150" cy="18" r="7" fill="#0a84ff"/></g>
       <g class="orb" style="animation-delay:1.05s"><circle cx="22" cy="240" r="16" fill="#ff9f0a" filter="url(#hb)" opacity=".7"/><circle cx="22" cy="240" r="7" fill="#ff9f0a"/></g>
       <g class="orb" style="animation-delay:1.2s"><circle cx="278" cy="240" r="16" fill="#bf5af2" filter="url(#hb)" opacity=".7"/><circle cx="278" cy="240" r="7" fill="#bf5af2"/></g>
-      <g class="wander"><circle cx="150" cy="166" r="16" fill="#fff" filter="url(#hb)" opacity=".35"/><circle cx="150" cy="166" r="9" fill="#fff"/></g>
+      <g class="wander"><circle cx="150" cy="166" r="16" fill="var(--hero-dot)" filter="url(#hb)" opacity=".35"/><circle cx="150" cy="166" r="9" fill="var(--hero-dot)"/></g>
     </svg>
   </div>
   <h1 class="rise" style="animation-delay:.3s">What will we value in 2060?</h1>
@@ -150,7 +153,7 @@ p{margin:0}
     <div><span class="vchip"><i style="background:var(--pu)"></i>Purpose</span><p class="small def">Doing something useful that matters</p></div>
   </div>
   <div class="grow"></div>
-  <div class="dock" style="background:linear-gradient(to bottom,transparent,#000 34%)">
+  <div class="dock">
     <button class="btn" id="begin">Begin</button>
     <p class="note" style="margin-top:10px">Anonymous. Part of a UCD student project.</p>
   </div>
@@ -293,12 +296,13 @@ function picker(hostId,pillId,hintId,btn,ghostW){
 
 /* ===== flow ===== */
 const meta=document.querySelector('meta[name="theme-color"]');
+if(meta&&!matchMedia('(prefers-color-scheme: dark)').matches)meta.setAttribute('content','#ffffff'); // intro follows the phone's theme
 let current=$('intro');
 function go(id){
   const next=$(id); if(next===current)return;
   current.classList.add('leave');
   setTimeout(()=>{current.classList.remove('on','leave');next.classList.add('on');current=next;
-    const night=id!=='today';document.body.classList.toggle('night',night);
+    const night=id==='future';document.body.classList.toggle('night',night); // only 2060 is always dark; the rest follow the phone
     if(meta)meta.setAttribute('content',night?'#000000':(matchMedia('(prefers-color-scheme: dark)').matches?'#000000':'#ffffff'));
     window.scrollTo(0,0)}, reduce?0:220);
 }
@@ -366,6 +370,7 @@ const ARCH={
   x:{name:'The Balancer',line:'You think no single value wins in 2060.'}
 };
 const GRAD={e:['#0a84ff','#5e5ce6'],b:['#ff9f0a','#ff375f'],p:['#bf5af2','#ff2d55'],x:['#0a84ff','#bf5af2']};
+const GRAD_L={...GRAD,b:['#e05a00','#ff375f']}; // light mode: deeper orange so the name keeps 3:1 contrast on white
 function archOf(fp){const top=K.slice().sort((a,b)=>fp[b]-fp[a])[0];return fp[top]<42?'x':top}
 
 function countUp(node,to,suffix,prefix){if(reduce){node.textContent=(prefix||'')+to+(suffix||'');return}
@@ -376,6 +381,7 @@ function showResult(me,crowd,note){
   const key=archOf(me.f),A=ARCH[key];
   const [c1,c2]=GRAD[key];
   const arch=$('arch');arch.style.setProperty('--c1',c1);arch.style.setProperty('--c2',c2);arch.textContent=A.name;
+  arch.style.setProperty('--c1l',GRAD_L[key][0]);arch.style.setProperty('--c2l',GRAD_L[key][1]);
   $('archLine').textContent=A.line;
   const host=$('triR');host.innerHTML='';const s=triangle(host);s.removeAttribute('tabindex');s.style.cursor='default';
   const toW=p=>({e:p.e/100,b:p.b/100,p:p.p/100});
