@@ -55,6 +55,7 @@ p{margin:0}
 #intro{background:#000;color:#f5f5f7;margin:0 auto;--ink:#f5f5f7;--ink-2:#a1a1a6;--hair:#38383a;--canvas:#000;--accent:#2997ff}
 .hero-art{display:flex;justify-content:center;margin:12px 0 22px}
 .hero-art svg{width:min(76vw,300px);height:auto;overflow:visible}
+@supports (height:100svh){.hero-art svg{width:clamp(140px,calc((100svh - 500px) * 1.11),min(76vw,300px))}}
 .draw{stroke-dasharray:900;stroke-dashoffset:900;animation:draw 1.6s .2s var(--ease) forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
 .orb{opacity:0;transform-box:fill-box;transform-origin:center;animation:orb .7s var(--ease) forwards}
@@ -66,6 +67,9 @@ p{margin:0}
 .vals{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
 .vchip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:980px;background:#1c1c1e;font-size:15px;font-weight:500}
 .vchip i{width:8px;height:8px;border-radius:50%}
+.vals>div:last-child{flex-grow:1}
+.def{width:0;min-width:100%;margin-top:6px;text-wrap:balance}
+@media (max-width:374px){.vchip{padding:8px 10px;gap:6px}}
 
 /* triangle */
 .tri{width:100%;height:auto;display:block;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;overflow:visible;margin-top:4px}
@@ -141,9 +145,9 @@ p{margin:0}
   <h1 class="rise" style="animation-delay:.3s">What will we value in 2060?</h1>
   <p class="sub rise" style="animation-delay:.45s">Place one dot for today. One for 2060. Discover your archetype.</p>
   <div class="vals rise" style="animation-delay:.6s">
-    <span class="vchip"><i style="background:var(--eq)"></i>Equality</span>
-    <span class="vchip"><i style="background:var(--be)"></i>Belonging</span>
-    <span class="vchip"><i style="background:var(--pu)"></i>Purpose</span>
+    <div><span class="vchip"><i style="background:var(--eq)"></i>Equality</span><p class="small def">Everyone has a fair and equal share</p></div>
+    <div><span class="vchip"><i style="background:var(--be)"></i>Belonging</span><p class="small def">Being part of a close community</p></div>
+    <div><span class="vchip"><i style="background:var(--pu)"></i>Purpose</span><p class="small def">Doing something useful that matters</p></div>
   </div>
   <div class="grow"></div>
   <div class="dock" style="background:linear-gradient(to bottom,transparent,#000 34%)">
