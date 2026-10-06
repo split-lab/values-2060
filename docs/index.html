@@ -309,7 +309,13 @@ $('begin').onclick=()=>{buzz(8);go('today');if(!T)T=picker('triT','pillsT','hint
 $('toFuture').onclick=()=>{
   buzz(12);
   if(!F){F=picker('triF','pillsF','hintF',$('toAge'),T.w)}
-  if(reduce){go('future');return}
+  if(reduce){ // calm time-jump: no streaks or scaling, just fade in, count the year, fade out.
+    // Fades use Web Animations because the reduced-motion CSS rule above zeroes CSS transitions.
+    const w=$('warp'),yr=$('yr');w.classList.add('on');w.animate([{opacity:0},{opacity:1}],{duration:300,easing:'ease-out'});
+    const t0=performance.now(),D=1400;
+    (function tick(t){const k=Math.min(1,(t-t0)/D),e=1-Math.pow(2,-10*k);yr.textContent=Math.round(2026+34*e);
+      if(k<1)requestAnimationFrame(tick);else{buzz([8,40,14]);setTimeout(()=>{go('future');const a=w.animate([{opacity:1},{opacity:0}],{duration:500,easing:'ease-in',fill:'forwards'});a.onfinish=()=>{w.classList.remove('on');a.cancel()}},260)}})(t0);
+    return}
   const w=$('warp'),yr=$('yr');
   if(!w.dataset.built){for(let i=0;i<28;i++){const s=document.createElement('span');s.className='streak';s.style.setProperty('--a',(i*(360/28)+Math.random()*8)+'deg');s.style.animationDelay=(Math.random()*.35)+'s';w.appendChild(s)}w.dataset.built=1}
   w.classList.add('on');requestAnimationFrame(()=>w.classList.add('go'));
@@ -326,10 +332,11 @@ function sample(){let s=17;const r=()=>(s=(s*9301+49297)%233280)/233280;const ou
   for(let i=0;i<41;i++){const n=(a,b,c)=>{const t=a+b+c;return {e:a/t,b:b/t,p:c/t}};
     out.push({t:n(.15+r()*.35,.1+r()*.3,.35+r()*.45),f:n(.2+r()*.45,.3+r()*.5,.15+r()*.45)})}return out}
 async function withTimeout(p,ms){return Promise.race([p,new Promise((_,j)=>setTimeout(()=>j('timeout'),ms))])}
+const toCrowd=pts=>({n:pts.length,points:pts.map(a=>({t:{e:a[0]/100,b:a[1]/100,p:a[2]/100},f:{e:a[3]/100,b:a[4]/100,p:a[5]/100}})),demo:false});
 async function fetchCrowd(){
   if(!ENDPOINT) return {n:null,points:sample(),demo:true};
   try{const r=await withTimeout(fetch(ENDPOINT),5000);const d=await r.json();
-    return {n:d.n,points:(d.points||[]).map(a=>({t:{e:a[0]/100,b:a[1]/100,p:a[2]/100},f:{e:a[3]/100,b:a[4]/100,p:a[5]/100}})),demo:false}}
+    return toCrowd(d.points||[])}
   catch(_){return {n:null,points:[],demo:false}}
 }
 
@@ -338,11 +345,11 @@ async function submit(){
   if(submitted)return;submitted=true;go('loading');
   const tP=pct(T.w),fP=pct(F.w);
   const rec={respondent_id:uuid(),t:tP,f:fP,ua:navigator.userAgent.slice(0,180)};
-  let n=null,dup=false;
+  let n=null,dup=false,crowd=null;
   const started=performance.now();
-  if(ENDPOINT){try{const r=await withTimeout(fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(rec)}),8000);const d=await r.json();if(d.ok)n=d.n;else if(d.reason==='duplicate')dup=true}catch(_){}}
-  const crowd=await fetchCrowd();
-  await new Promise(r=>setTimeout(r,Math.max(0,1500-(performance.now()-started))));
+  if(ENDPOINT){try{const r=await withTimeout(fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(rec)}),8000);const d=await r.json();if(d.ok)n=d.n;else if(d.reason==='duplicate')dup=true;if(Array.isArray(d.points))crowd=toCrowd(d.points)}catch(_){}}
+  if(!crowd)crowd=await fetchCrowd(); // the POST reply carries the points; only GET if it failed
+  await new Promise(r=>setTimeout(r,Math.max(0,800-(performance.now()-started))));
   const saved={t:tP,f:fP,n:n||crowd.n,demo:crowd.demo};store.set('v2060',saved);
   showResult(saved,crowd,dup?'You have already taken part.':'');
 }

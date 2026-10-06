@@ -29,11 +29,11 @@ function doPost(e) {
     const last = sh.getLastRow();
     if (last > 1) {
       const ids = sh.getRange(2, 2, last - 1, 1).getValues().flat();
-      if (ids.indexOf(d.respondent_id) !== -1) return out({ ok: false, reason: 'duplicate' });
+      if (ids.indexOf(d.respondent_id) !== -1) return out({ ok: false, reason: 'duplicate', points: allPoints(sh) });
     }
     sh.appendRow([new Date(), d.respondent_id, d.t.e, d.t.b, d.t.p, d.f.e, d.f.b, d.f.p,
                   deviceOf(cleanUa(d.ua))]);
-    return out({ ok: true, n: sh.getLastRow() - 1 });
+    return out({ ok: true, n: sh.getLastRow() - 1, points: allPoints(sh) });
   } catch (err) {
     return out({ ok: false, reason: 'error' });
   } finally {
@@ -42,10 +42,15 @@ function doPost(e) {
 }
 
 function doGet() {
-  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET);
-  const last = sh.getLastRow();
-  const points = last > 1 ? sh.getRange(2, 3, last - 1, 6).getValues() : [];
+  const points = allPoints(SpreadsheetApp.getActive().getSheetByName(SHEET));
   return out({ n: points.length, points: points });
+}
+
+// Every response's six shares (today e/b/p, 2060 e/b/p). Shared by doGet and doPost so the
+// survey can draw the crowd straight from its POST reply without a second request.
+function allPoints(sh) {
+  const last = sh.getLastRow();
+  return last > 1 ? sh.getRange(2, 3, last - 1, 6).getValues() : [];
 }
 
 // Strip leading = + - @ (and whitespace) so Sheets/Excel never treat the user agent as a formula.
