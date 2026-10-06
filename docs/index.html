@@ -303,12 +303,12 @@ function go(id){
     window.scrollTo(0,0)}, reduce?0:220);
 }
 
-let T,F;
+let T,F,prefetch;
 $('begin').onclick=()=>{buzz(8);go('today');if(!T)T=picker('triT','pillsT','hintT',$('toFuture'))};
 
 $('toFuture').onclick=()=>{
   buzz(12);
-  if(!F){F=picker('triF','pillsF','hintF',$('toAge'),T.w)}
+  if(!F){F=picker('triF','pillsF','hintF',$('toAge'),T.w);prefetch=fetchCrowd()} // crowd points load while they place the 2060 dot
   if(reduce){ // calm time-jump: no streaks or scaling, just fade in, count the year, fade out.
     // Fades use Web Animations because the reduced-motion CSS rule above zeroes CSS transitions.
     const w=$('warp'),yr=$('yr');w.classList.add('on');w.animate([{opacity:0},{opacity:1}],{duration:300,easing:'ease-out'});
@@ -345,13 +345,17 @@ async function submit(){
   if(submitted)return;submitted=true;go('loading');
   const tP=pct(T.w),fP=pct(F.w);
   const rec={respondent_id:uuid(),t:tP,f:fP,ua:navigator.userAgent.slice(0,180)};
-  let n=null,dup=false,crowd=null;
   const started=performance.now();
-  if(ENDPOINT){try{const r=await withTimeout(fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(rec)}),8000);const d=await r.json();if(d.ok)n=d.n;else if(d.reason==='duplicate')dup=true;if(Array.isArray(d.points))crowd=toCrowd(d.points)}catch(_){}}
-  if(!crowd)crowd=await fetchCrowd(); // the POST reply carries the points; only GET if it failed
+  // Save in the background; keepalive lets the request finish even if they close the page on the result. A duplicate is only logged.
+  const post=ENDPOINT?withTimeout(fetch(ENDPOINT,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(rec)}),8000).then(r=>r.json()).then(d=>{if(d.reason==='duplicate')console.log('Values 2060: duplicate response, not saved again');return d}).catch(()=>null):Promise.resolve(null);
+  // Use the prefetched points (n = count + 1); if they aren't back yet, whichever of the prefetch or the POST reply arrives first.
+  const pre=(prefetch||fetchCrowd()).then(c=>c.n===null&&!c.demo?Promise.reject():{crowd:c,n:c.n===null?null:c.n+1});
+  const viaPost=post.then(d=>d&&Array.isArray(d.points)?{crowd:toCrowd(d.points),n:d.ok?d.n:d.points.length}:Promise.reject());
+  let got=await Promise.any([pre,viaPost]).catch(()=>null);
+  if(!got){const c=await fetchCrowd();got={crowd:c,n:c.n}}
   await new Promise(r=>setTimeout(r,Math.max(0,800-(performance.now()-started))));
-  const saved={t:tP,f:fP,n:n||crowd.n,demo:crowd.demo};store.set('v2060',saved);
-  showResult(saved,crowd,dup?'You have already taken part.':'');
+  const saved={t:tP,f:fP,n:got.n,demo:got.crowd.demo};store.set('v2060',saved);
+  showResult(saved,got.crowd,'');
 }
 
 /* ===== result ===== */
